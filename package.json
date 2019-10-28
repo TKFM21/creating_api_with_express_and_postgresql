@@ -14,11 +14,14 @@
   },
   "description": "This repository is for [this meetup event](https://www.meetup.com/ja-JP/CodeChrysalis/events/245248864/).",
   "devDependencies": {
+    "mocha": "^6.2.2",
     "morgan": "^1.9.1",
-    "nodemon": "^1.19.4"
+    "nodemon": "^1.19.4",
+    "power-assert": "^1.6.1",
+    "supertest": "^4.0.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha",
     "start": "NODE_ENV=development nodemon src/index.js"
   },
   "repository": {
