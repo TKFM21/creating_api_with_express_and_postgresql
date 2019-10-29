@@ -4,13 +4,16 @@ const { todo, sequelize } = require('../../../src/db/models');
 
 describe('API GET /api/todos/ TEST', () => {
     before(async () => {
+        const promises = [];
         for (let i = 0; i < 5; i++) {
             const insertTodo = {
                 title: 'test title' + i,
                 body: 'test body' + i
             };
-            await todo.create(insertTodo);
+            const promise = todo.create(insertTodo);
+            promises.push(promise);
         }
+        await Promise.all(promises);
     });
     after(async () => {
         await sequelize.truncate();
