@@ -1,7 +1,7 @@
 'use strict'
 // 厳格モードを指定
 
-const db = require('../db/models/');
+const { todo, sequelize } = require('../db/models');
 
 // 引数をdataキーでオブジェクト形式で戻す
 const formatResponseData = (data) => ({ data });
@@ -9,7 +9,7 @@ const formatResponseData = (data) => ({ data });
 module.exports = {
     getTodos: async (req, res) => {
         try {
-            const todos = await db.todo.findAll({
+            const todos = await todo.findAll({
                 order: [
                     ['id', 'ASC']
                 ],
@@ -22,8 +22,27 @@ module.exports = {
             res.status(400).json({ message: error.message });
         }
     },
-    postTodo: (req, res) => {
-        send(res, statusCode.OK, 'postTodo', false);
+    postTodo: async (req, res) => {
+        let transaction;
+        try {
+            transaction = await sequelize.transaction();
+            const { title, body, complete = false } = req.body;
+
+            const createdTodo = await todo.create(
+                {
+                    title,
+                    body,
+                    complete
+                },
+                { transaction }
+            );
+
+            await transaction.commit();
+            res.status(200).json(formatResponseData(createdTodo));
+        } catch (error) {
+            await transaction.rollback();
+            res.status(400).json({ message: error.message });
+        }
     },
     putTodo: (req, res) => {
         send(res, statusCode.OK, 'putTodo', false);
