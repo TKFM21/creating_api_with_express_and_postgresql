@@ -8,7 +8,10 @@ const router = express.Router();
 router
     .route('/todos')
     .get(controller.getTodos)
-    .post(controller.postTodo)
+    .post(controller.postTodo);
+
+router
+    .route('/todos/:id')
     .put(controller.putTodo)
     .delete(controller.deleteTodo);
 

@@ -44,8 +44,11 @@ module.exports = {
             res.status(400).json({ message: error.message });
         }
     },
-    putTodo: (req, res) => {
-        send(res, statusCode.OK, 'putTodo', false);
+    putTodo: async (req, res) => {
+        const id = req.params.id;
+        const { title, body, complete } = req.body;
+        console.log({id, title, body, complete});
+        res.json({id, title, body, complete});
     },
     deleteTodo: (req, res) => {
         send(res, statusCode.OK, 'deleteTodo', false);
