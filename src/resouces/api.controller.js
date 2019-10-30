@@ -24,26 +24,18 @@ module.exports = {
     },
     postTodo: async (req, res) => {
         let transaction;
-        const insertTodo = {};
         try {
             transaction = await sequelize.transaction();
-            if (!req.body.title) {
-                throw new Error('titleがありません。');
-            } else {
-                insertTodo.title = req.body.title;
-            }
-            if (!req.body.body) {
-                throw new Error('bodyがありません。');
-            } else {
-                insertTodo.body = req.body.body;
-            }
-            if (!req.body.complete) {
-                insertTodo.complete = false;
-            } else {
-                insertTodo.complete = req.body.complete;
-            }
+            const { title, body, complete = false } = req.body;
 
-            const createdTodo = await todo.create(insertTodo, { transaction });
+            const createdTodo = await todo.create(
+                {
+                    title,
+                    body,
+                    complete
+                },
+                { transaction }
+            );
 
             await transaction.commit();
             res.status(200).json(formatResponseData(createdTodo));

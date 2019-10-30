@@ -53,7 +53,7 @@ describe('API POST /api/todos/ TEST', () => {
             endPoint: '/api/todos',
             statusCode: 400
         }).send(failData);
-        assert.strictEqual(response.body.message, 'titleがありません。');
+        assert.strictEqual(response.body.message, '列"title"内のNULL値はNOT NULL制約違反です');
     });
 
     it('bodyがない場合、400エラー', async () => {
@@ -65,6 +65,6 @@ describe('API POST /api/todos/ TEST', () => {
             endPoint: '/api/todos',
             statusCode: 400
         }).send(failData);
-        assert.strictEqual(response.body.message, 'bodyがありません。');
+        assert.strictEqual(response.body.message, '列"body"内のNULL値はNOT NULL制約違反です');
     });
 });
