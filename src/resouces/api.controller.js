@@ -49,42 +49,26 @@ module.exports = {
         try {
             transaction = await sequelize.transaction();
             const id = req.params.id;
-            // updateする場合のwhere指定を作成
-            const whereId = { id: id };
             // 指定されたidが存在するか確認
-            const dbResponse = await todo.findByPk(id, { transaction });
-            if (!dbResponse) {
+            const targetTodo = await todo.findByPk(id, { transaction });
+            if (!targetTodo) {
                 // 存在しないidが指定された場合はnullが返る
-                throw new Error('存在しないidです');
+                const error = new Error('存在しないidです');
+                error.status = 404;
+                throw error;
             }
-
-            // オブジェクト形式の変数へ格納
-            const targetTodo = dbResponse.dataValues;
-            // undefinedとしないために既存データを初期値として指定
-            const { title = targetTodo.title,
-                    body = targetTodo.body,
-                    complete = targetTodo.complete } = req.body;
-            
-            // updateメソッドの戻り値は更新されたレコード数
-            await todo.update({ title, body, complete },
-                { where: whereId },
-                { transaction });
-            
-            const updatedTodo = await todo.findAll({
-                where: whereId,
-                raw: true
-            }, { transaction });
-
+            const { title, body, complete } = req.body;
+            await targetTodo.update({ title, body, complete }, { transaction });
             await transaction.commit();
-            res.status(200).json(formatResponseData(updatedTodo));
-
+            res.status(200).json(targetTodo.dataValues);
         } catch (error) {
             await transaction.rollback();
-            if (error.message === '存在しないidです') {
-                res.status(404).json({ message: error.message });
+            const errorStatus = error.status || 400;
+            const dbErrorIntPattern = /^integerに対する不正な入力構文:/;
+            if (error.message.match(dbErrorIntPattern)) {
+                error.message = 'idは不正な値です。(期待する型は1以上の 整数値 )';
             }
-            // 数字以外が指定された場合は400の"integerに対する不正な入力構文: \"a\""が返る
-            res.status(400).json({ message: error.message });
+            res.status(errorStatus).json({ message: error.message });
         }
     },
     deleteTodo: (req, res) => {
