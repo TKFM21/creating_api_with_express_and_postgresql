@@ -44,8 +44,35 @@ module.exports = {
             res.status(400).json({ message: error.message });
         }
     },
-    putTodo: (req, res) => {
-        send(res, statusCode.OK, 'putTodo', false);
+    putTodo: async (req, res) => {
+        try {
+            const id = req.params.id;
+            // 指定されたidが存在するか確認
+            const targetTodo = await todo.findByPk(id);
+            if (!targetTodo) {
+                // 存在しないidが指定された場合はnullが返る
+                const error = new Error('存在しないidです');
+                error.status = 404;
+                throw error;
+            }
+            const { dataValues: updatedTodo } = await sequelize.transaction(
+                async (transaction) => {
+                    const { title, body, complete } = req.body;
+                    return await targetTodo.update(
+                        { title, body, complete },
+                        { transaction }
+                    );
+                }
+            );
+            res.status(200).json(updatedTodo);
+        } catch (error) {
+            const errorStatus = error.status || 400;
+            const dbErrorIntPattern = /^integerに対する不正な入力構文:/;
+            if (error.message.match(dbErrorIntPattern)) {
+                error.message = 'idは不正な値です。(期待する型は1以上の 整数値 )';
+            }
+            res.status(errorStatus).json({ message: error.message });
+        }
     },
     deleteTodo: (req, res) => {
         send(res, statusCode.OK, 'deleteTodo', false);
