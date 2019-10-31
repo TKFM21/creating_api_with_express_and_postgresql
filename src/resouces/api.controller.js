@@ -45,24 +45,27 @@ module.exports = {
         }
     },
     putTodo: async (req, res) => {
-        let transaction;
         try {
-            transaction = await sequelize.transaction();
             const id = req.params.id;
             // 指定されたidが存在するか確認
-            const targetTodo = await todo.findByPk(id, { transaction });
+            const targetTodo = await todo.findByPk(id);
             if (!targetTodo) {
                 // 存在しないidが指定された場合はnullが返る
                 const error = new Error('存在しないidです');
                 error.status = 404;
                 throw error;
             }
-            const { title, body, complete } = req.body;
-            await targetTodo.update({ title, body, complete }, { transaction });
-            await transaction.commit();
-            res.status(200).json(targetTodo.dataValues);
+            const { dataValues: updatedTodo } = await sequelize.transaction(
+                async (transaction) => {
+                    const { title, body, complete } = req.body;
+                    return await targetTodo.update(
+                        { title, body, complete },
+                        { transaction }
+                    );
+                }
+            );
+            res.status(200).json(updatedTodo);
         } catch (error) {
-            await transaction.rollback();
             const errorStatus = error.status || 400;
             const dbErrorIntPattern = /^integerに対する不正な入力構文:/;
             if (error.message.match(dbErrorIntPattern)) {
