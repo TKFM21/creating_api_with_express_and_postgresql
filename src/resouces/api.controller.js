@@ -23,32 +23,25 @@ module.exports = {
         }
     },
     postTodo: async (req, res) => {
-        let transaction;
         try {
-            transaction = await sequelize.transaction();
-            const { title, body, complete = false } = req.body;
-
-            const createdTodo = await todo.create(
-                {
-                    title,
-                    body,
-                    complete
-                },
-                { transaction }
+            const { dataValues: createdTodo } = await sequelize.transaction(
+                async (transaction) => {
+                    const { title, body, complete = false } = req.body;
+                    return await todo.create(
+                        { title, body, complete },
+                        { transaction }
+                    );
+                }
             );
-
-            await transaction.commit();
-            res.status(200).json(formatResponseData(createdTodo));
+            res.status(200).json(createdTodo);
         } catch (error) {
-            await transaction.rollback();
             res.status(400).json({ message: error.message });
         }
     },
     putTodo: async (req, res) => {
         try {
-            const id = req.params.id;
             // 指定されたidが存在するか確認
-            const targetTodo = await todo.findByPk(id);
+            const targetTodo = await todo.findByPk(req.params.id);
             if (!targetTodo) {
                 // 存在しないidが指定された場合はnullが返る
                 const error = new Error('存在しないidです');
@@ -74,7 +67,27 @@ module.exports = {
             res.status(errorStatus).json({ message: error.message });
         }
     },
-    deleteTodo: (req, res) => {
-        send(res, statusCode.OK, 'deleteTodo', false);
+    deleteTodo: async (req, res) => {
+        try {
+            const targetTodo = await todo.findByPk(req.params.id);
+            if (!targetTodo) {
+                const error = new Error('存在しないidです');
+                error.status = 404;
+                throw error;
+            }
+            await sequelize.transaction(
+                async (transaction) => {
+                    return await targetTodo.destroy({ transaction });
+                }
+            );
+            res.status(200).json(targetTodo);
+        } catch (error) {
+            const errorStatus = error.status || 400;
+            const dbErrorIntPattern = /^integerに対する不正な入力構文:/;
+            if (error.message.match(dbErrorIntPattern)) {
+                error.message = 'idは不正な値です。(期待する型は1以上の 整数値 )';
+            }
+            res.status(errorStatus).json({ message: error.message });
+        }
     }
 };

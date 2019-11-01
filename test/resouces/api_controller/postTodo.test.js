@@ -29,7 +29,7 @@ describe('API POST /api/todos/ TEST', () => {
             endPoint: '/api/todos',
             statusCode: 200
         }).send(testData);
-        const createdTodo = response.body.data;
+        const createdTodo = response.body;
         assert.deepStrictEqual({ ...createdTodo }, {
             id: createdTodo.id,
             title: testData.title,
